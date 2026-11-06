@@ -1,0 +1,1319 @@
+<!doctype html>
+<html lang="ru">
+
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+    <title>Буфет: Кассовый учет</title>
+    <style>
+        :root {
+            --bg-color: #f8fafc;
+            --surface-color: #ffffff;
+            --text-main: #0f172a;
+            --text-muted: #64748b;
+            --primary: #1e3a8a;
+            --primary-hover: #1e40af;
+            --kaspi-color: #991b1b;
+            --kaspi-bg: #fef2f2;
+            --cash-color: #065f46;
+            --cash-bg: #ecfdf5;
+            --danger-color: #dc2626;
+            --border-color: #cbd5e1;
+            --shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.1), 0 1px 2px 0 rgba(0, 0, 0, 0.06);
+            --radius: 10px;
+        }
+        
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            -webkit-tap-highlight-color: transparent;
+            user-select: none;
+        }
+        
+        body {
+            background-color: var(--bg-color);
+            color: var(--text-main);
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            padding-bottom: 75px;
+        }
+        
+        header {
+            background-color: var(--primary);
+            color: white;
+            padding: 12px 16px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            position: sticky;
+            top: 0;
+            z-index: 100;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+        }
+        
+        .logo {
+            font-size: 1rem;
+            font-weight: 700;
+            display: flex;
+            flex-direction: column;
+        }
+        
+        .logo span.date-sub {
+            font-size: 0.7rem;
+            font-weight: 400;
+            color: #93c5fd;
+            margin-top: 1px;
+        }
+        
+        .shift-badge {
+            padding: 5px 10px;
+            border-radius: 20px;
+            font-size: 0.7rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+        .shift-badge.open {
+            background: #d1fae5;
+            color: #065f46;
+        }
+        .shift-badge.closed {
+            background: #fee2e2;
+            color: #991b1b;
+        }
+        
+        .container {
+            max-width: 750px;
+            width: 100%;
+            margin: 0 auto;
+            padding: 12px;
+            flex: 1;
+        }
+        
+        nav.bottom-nav {
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            background: var(--surface-color);
+            border-top: 1px solid var(--border-color);
+            display: flex;
+            justify-content: space-around;
+            padding: 8px 0;
+            z-index: 100;
+        }
+        
+        .nav-item {
+            background: none;
+            border: none;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            color: var(--text-muted);
+            font-size: 0.7rem;
+            font-weight: 600;
+            cursor: pointer;
+            padding: 4px 12px;
+            transition: color 0.2s;
+        }
+        .nav-item.active {
+            color: var(--primary);
+        }
+        .nav-item svg {
+            width: 20px;
+            height: 20px;
+            margin-bottom: 2px;
+            fill: currentColor;
+        }
+        
+        .screen {
+            display: none;
+        }
+        .screen.active {
+            display: block;
+        }
+        
+        .card {
+            background: var(--surface-color);
+            border-radius: var(--radius);
+            padding: 14px;
+            box-shadow: var(--shadow);
+            margin-bottom: 12px;
+            border: 1px solid var(--border-color);
+        }
+        
+        .dashboard-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 10px;
+            margin-bottom: 12px;
+        }
+        
+        .stat-card {
+            background: var(--surface-color);
+            padding: 12px;
+            border-radius: var(--radius);
+            border: 1px solid var(--border-color);
+            box-shadow: var(--shadow);
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+        }
+        .stat-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 4px;
+        }
+        .stat-card .title {
+            font-size: 0.75rem;
+            color: var(--text-muted);
+            font-weight: 600;
+        }
+        .stat-card svg {
+            width: 16px;
+            height: 16px;
+            fill: var(--text-muted);
+            opacity: 0.8;
+        }
+        .stat-card .value {
+            font-size: 1.2rem;
+            font-weight: 800;
+            color: var(--text-main);
+        }
+        
+        .btn {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 6px;
+            width: 100%;
+            padding: 10px 14px;
+            border-radius: var(--radius);
+            font-weight: 700;
+            font-size: 0.9rem;
+            border: none;
+            cursor: pointer;
+        }
+        .btn svg {
+            width: 16px;
+            height: 16px;
+            fill: currentColor;
+        }
+        .btn:active {
+            transform: scale(0.98);
+        }
+        .btn-primary {
+            background: var(--primary);
+            color: white;
+        }
+        .btn-danger {
+            background: var(--danger-color);
+            color: white;
+        }
+        .btn-outline {
+            background: transparent;
+            border: 1px solid var(--border-color);
+            color: var(--text-main);
+        }
+        
+        .categories-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+            gap: 10px;
+        }
+        
+        .category-tile {
+            background: var(--surface-color);
+            border: 1px solid var(--border-color);
+            border-radius: var(--radius);
+            padding: 18px 10px;
+            text-align: center;
+            cursor: pointer;
+            box-shadow: var(--shadow);
+            position: relative;
+        }
+        .category-tile:hover {
+            border-color: var(--primary);
+        }
+        .category-tile h3 {
+            font-size: 0.95rem;
+            font-weight: 700;
+            margin-bottom: 4px;
+            padding-right: 40px;
+            word-break: break-word;
+        }
+        .category-tile span {
+            font-size: 0.75rem;
+            color: var(--text-muted);
+        }
+        
+        .category-actions {
+            position: absolute;
+            top: 6px;
+            right: 6px;
+            display: flex;
+            gap: 4px;
+        }
+        .icon-btn {
+            background: #f1f5f9;
+            border: none;
+            border-radius: 4px;
+            width: 24px;
+            height: 24px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+        }
+        .icon-btn svg {
+            width: 14px;
+            height: 14px;
+            fill: var(--text-muted);
+        }
+        .icon-btn.danger svg {
+            fill: var(--danger-color);
+        }
+        .icon-btn:hover {
+            background: #e2e8f0;
+        }
+        
+        .back-bar {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            margin-bottom: 10px;
+            font-weight: 700;
+            color: var(--primary);
+            cursor: pointer;
+            background: none;
+            border: none;
+            font-size: 0.95rem;
+        }
+        .back-bar svg {
+            width: 16px;
+            height: 16px;
+            fill: currentColor;
+        }
+        
+        .search-box {
+            width: 100%;
+            padding: 10px 12px;
+            border: 1px solid var(--border-color);
+            border-radius: var(--radius);
+            font-size: 0.95rem;
+            margin-bottom: 10px;
+            outline: none;
+            background: var(--surface-color);
+        }
+        .search-box:focus {
+            border-color: var(--primary);
+        }
+        
+        .product-list {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+        
+        .product-card {
+            background: var(--surface-color);
+            border-radius: var(--radius);
+            padding: 12px;
+            border: 1px solid var(--border-color);
+            box-shadow: var(--shadow);
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+        
+        .product-info {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+        }
+        .product-name {
+            font-weight: 700;
+            font-size: 1rem;
+        }
+        .product-price {
+            font-weight: 700;
+            color: var(--primary);
+            font-size: 1rem;
+        }
+        .product-total-sold {
+            font-size: 0.8rem;
+            color: var(--text-muted);
+            margin-top: 2px;
+        }
+        
+        .payment-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 8px;
+        }
+        
+        .payment-column {
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+        }
+        
+        .pay-btn {
+            position: relative;
+            overflow: hidden;
+            padding: 12px 8px;
+            border-radius: 8px;
+            border: 1px solid transparent;
+            font-weight: 700;
+            font-size: 0.85rem;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 2px;
+            cursor: pointer;
+            width: 100%;
+        }
+        
+        .pay-btn.kaspi {
+            background-color: var(--kaspi-bg);
+            color: var(--kaspi-color);
+            border-color: #fca5a5;
+        }
+        .pay-btn.cash {
+            background-color: var(--cash-bg);
+            color: var(--cash-color);
+            border-color: #6ee7b7;
+        }
+        
+        .pay-btn span.sub-stat {
+            font-size: 0.7rem;
+            font-weight: 600;
+            opacity: 0.9;
+        }
+        .pay-btn svg {
+            width: 14px;
+            height: 14px;
+            fill: currentColor;
+            margin-bottom: 1px;
+        }
+        
+        .pay-btn .progress-bar {
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            height: 3px;
+            background: currentColor;
+            width: 0%;
+            transition: width 0s linear;
+        }
+        
+        .btn-cancel-col {
+            background: #f1f5f9;
+            color: #475569;
+            border: 1px solid var(--border-color);
+            padding: 6px;
+            border-radius: 6px;
+            font-weight: 600;
+            font-size: 0.7rem;
+            cursor: pointer;
+            text-align: center;
+        }
+        .btn-cancel-col:active {
+            background: #e2e8f0;
+        }
+        
+        .hold-hint {
+            font-size: 0.65rem;
+            color: var(--text-muted);
+            text-align: center;
+        }
+        
+        #saleSplash {
+            position: fixed;
+            top: 16px;
+            left: 50%;
+            transform: translateX(-50%) translateY(-100px);
+            background: #0f172a;
+            color: white;
+            padding: 10px 20px;
+            border-radius: 20px;
+            font-weight: 700;
+            font-size: 0.85rem;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+            transition: transform 0.15s ease-out;
+            z-index: 2000;
+            pointer-events: none;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            border: 1px solid #334155;
+        }
+        #saleSplash.show {
+            transform: translateX(-50%) translateY(0);
+        }
+        #saleSplash svg {
+            width: 16px;
+            height: 16px;
+            fill: #4ade80;
+        }
+        
+        .modal-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(15, 23, 42, 0.5);
+            display: none;
+            justify-content: center;
+            align-items: center;
+            z-index: 1000;
+            padding: 12px;
+            backdrop-filter: blur(2px);
+        }
+        .modal-overlay.active {
+            display: flex;
+        }
+        .modal {
+            background: var(--surface-color);
+            border-radius: var(--radius);
+            width: 100%;
+            max-width: 420px;
+            max-height: 90vh;
+            overflow-y: auto;
+            padding: 18px;
+            box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.1);
+        }
+        .modal h3 {
+            font-size: 1.1rem;
+            font-weight: 800;
+            margin-bottom: 12px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        .form-group {
+            margin-bottom: 10px;
+        }
+        .form-group label {
+            display: block;
+            font-size: 0.75rem;
+            font-weight: 600;
+            color: var(--text-muted);
+            margin-bottom: 4px;
+        }
+        .form-control {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid var(--border-color);
+            border-radius: 6px;
+            font-size: 0.95rem;
+            outline: none;
+            color: var(--text-main);
+        }
+        .form-control:focus {
+            border-color: var(--primary);
+        }
+        .modal-actions {
+            display: flex;
+            gap: 8px;
+            margin-top: 14px;
+        }
+        
+        .history-table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 0.8rem;
+            margin-top: 6px;
+        }
+        .history-table th,
+        .history-table td {
+            padding: 8px;
+            border-bottom: 1px solid var(--border-color);
+            text-align: left;
+        }
+        .history-table th {
+            font-weight: 700;
+            color: var(--text-muted);
+            background: #f8fafc;
+            font-size: 0.7rem;
+            text-transform: uppercase;
+        }
+        
+        @media print {
+            body * {
+                visibility: hidden !important;
+            }
+            #shiftDetailModal,
+            #shiftDetailModal * {
+                visibility: visible !important;
+            }
+            #shiftDetailModal {
+                position: absolute !important;
+                left: 0 !important;
+                top: 0 !important;
+                width: 100% !important;
+                height: auto !important;
+                background: white !important;
+                padding: 0 !important;
+                margin: 0 !important;
+                display: block !important;
+            }
+            .no-print {
+                display: none !important;
+            }
+            .print-header {
+                display: block !important;
+                text-align: center;
+                margin-bottom: 15px;
+                border-bottom: 2px solid #000;
+                padding-bottom: 8px;
+            }
+            .print-header h2 {
+                font-size: 14pt;
+                font-weight: bold;
+                margin-bottom: 2px;
+            }
+            .print-header p {
+                font-size: 9pt;
+                color: #444;
+            }
+        }
+        .print-header {
+            display: none;
+        }
+    </style>
+</head>
+
+<body>
+    <div id="saleSplash">
+        <svg viewBox="0 0 24 24">
+            <path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z" />
+        </svg>
+        <span>Продано: <b id="splashText"></b></span>
+    </div>
+
+    <header>
+        <div class="logo">
+            Буфет: Кассовый учет
+            <span class="date-sub" id="headerDateTime">--.--.----, --:--:--</span>
+        </div>
+        <div id="shiftBadgeContainer">
+            <span class="shift-badge open" id="shiftStatusBadge">Смена открыта</span>
+        </div>
+    </header>
+
+    <div class="container">
+        <div id="screen-dashboard" class="screen active">
+            <div class="dashboard-grid">
+                <div class="stat-card">
+                    <div class="stat-header">
+                        <span class="title">Выручка за смену</span>
+                        <svg viewBox="0 0 24 24">
+                            <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 14h-2v-2h2v2zm0-4h-2V7h2v5z" />
+                        </svg>
+                    </div>
+                    <div class="value" id="statRevenue">0 ₸</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-header">
+                        <span class="title">Продано товаров</span>
+                        <svg viewBox="0 0 24 24">
+                            <path d="M21 16.5c0 .38-.21.71-.53.88l-7.9 4.44c-.16.12-.36.18-.57.18s-.41-.06-.57-.18l-7.9-4.44A1.003 1.003 0 0 1 3 16.5v-9c0-.38.21-.71.53-.88l7.9-4.44c.16-.12.36-.18.57-.18s.41.06.57.18l7.9 4.44c.32.17.53.5.53.88v9M12 4.15l-6.12 3.44L12 11.02l6.12-3.43L12 4.15M5 15.33l6 3.37v-6.75l-6-3.37v6.75m14 0v-6.75l-6 3.37v6.75l6-3.37Z" />
+                        </svg>
+                    </div>
+                    <div class="value" id="statItemsCount">0 шт.</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-header">
+                        <span class="title">Kaspi QR</span>
+                        <svg viewBox="0 0 24 24">
+                            <path d="M2 2h8v8H2V2m2 2v4h4V4H4m8-2h8v8h-8V2m2 2v4h4V4h-4M2 12h8v8H2v-8m2 2v4h4v-4H4m10 2h2v2h-2v-2m4 0h2v2h-2v-2m-4 4h2v2h-2v-2m4 0h2v2h-2v-2m-2-6h2v2h-2v-2z" />
+                        </svg>
+                    </div>
+                    <div class="value" id="statKaspi" style="color: var(--kaspi-color)">0 ₸</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-header">
+                        <span class="title">Наличные</span>
+                        <svg viewBox="0 0 24 24">
+                            <path d="M21 18v1c0 1.1-.9 2-2 2H5c-1.1 0-2-.9-2-2V5c0-1.1.9-2 2-2h14c1.1 0 2 .9 2 2v1h-9c-1.1 0-2 .9-2 2v8c0 1.1.9 2 2 2h9m-9-2h10V8H12v8m4-2.5c-.83 0-1.5-.67-1.5-1.5s.67-1.5 1.5-1.5 1.5.67 1.5 1.5-.67 1.5-1.5 1.5Z" />
+                        </svg>
+                    </div>
+                    <div class="value" id="statCash" style="color: var(--cash-color)">0 ₸</div>
+                </div>
+            </div>
+
+            <div class="card">
+                <button class="btn btn-danger" id="btnToggleShift" onclick="toggleShift()"></button>
+            </div>
+
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; margin-top: 14px;">
+                <div style="font-weight: 700; font-size: 0.95rem;">Категории продукции</div>
+                <button class="btn btn-primary" style="width: auto; padding: 6px 12px; font-size: 0.8rem;" onclick="openCategoryModal()">
+                    <svg viewBox="0 0 24 24" style="width:14px;height:14px;fill:currentColor;">
+                        <path d="M19 13h-6v6h-2v-6H5v-2h6V5h2v6h6v2z" />
+                    </svg>
+                    Категория
+                </button>
+            </div>
+            <div class="categories-grid" id="categoriesGrid"></div>
+        </div>
+
+        <div id="screen-category" class="screen">
+            <button class="back-bar" onclick="navigate('dashboard')">
+                <svg viewBox="0 0 24 24">
+                    <path d="M20 11H7.83l5.59-5.59L12 4l-8 8 8 8 1.41-1.41L7.83 13H20v-2z" />
+                </svg>
+                К списку категорий
+            </button>
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px">
+                <h2 id="currentCategoryTitle" style="font-size: 1.1rem; font-weight: 700">Категория</h2>
+                <button class="btn btn-primary" style="width: auto; padding: 6px 12px; font-size: 0.8rem" onclick="openProductModal()">
+                    <svg viewBox="0 0 24 24" style="width: 14px; height: 14px; fill: currentColor">
+                        <path d="M19 13h-6v6h-2v-6H5v-2h6V5h2v6h6v2z" />
+                    </svg>
+                    Товар
+                </button>
+            </div>
+            <input type="text" id="productSearch" class="search-box" placeholder="🔍 Поиск наименования..." oninput="renderProductsList()" />
+            <div class="product-list" id="productList"></div>
+        </div>
+
+        <div id="screen-analytics" class="screen">
+            <h2 style="margin-bottom: 10px; font-size: 1.1rem; font-weight: 700">Отчеты и архив смен</h2>
+            <div class="card">
+                <h3 style="font-size: 0.9rem; font-weight: 700; margin-bottom: 6px">Текущие показатели</h3>
+                <div id="analyticsSummary" class="text-muted" style="font-size: 0.85rem; line-height: 1.5">
+                    Нет данных.
+                </div>
+            </div>
+            <div class="card">
+                <h3 style="font-size: 0.9rem; font-weight: 700; margin-bottom: 6px">Архив кассовых смен</h3>
+                <div style="overflow-x: auto">
+                    <table class="history-table">
+                        <thead>
+                            <tr>
+                                <th>Дата / Время</th>
+                                <th>Kaspi QR</th>
+                                <th>Наличные</th>
+                                <th>Итого</th>
+                                <th>Действие</th>
+                            </tr>
+                        </thead>
+                        <tbody id="historyTableBody">
+                            <tr>
+                                <td colspan="5" style="text-align: center; color: var(--text-muted)">
+                                    Архив смен пуст
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <nav class="bottom-nav">
+        <button class="nav-item active" onclick="navigate('dashboard')" id="nav-dashboard">
+            <svg viewBox="0 0 24 24">
+                <path d="M10 20v-6h4v6h5v-8h3L12 3 2 12h3v8z" />
+            </svg>
+            Касса
+        </button>
+        <button class="nav-item" onclick="navigate('analytics')" id="nav-analytics">
+            <svg viewBox="0 0 24 24">
+                <path d="M19 3H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zM9 17H7v-7h2v7zm4 0h-2V7h2v10zm4 0h-2v-4h2v4z" />
+            </svg>
+            Отчеты
+        </button>
+    </nav>
+
+    <div class="modal-overlay" id="categoryModal">
+        <div class="modal">
+            <h3 id="categoryModalTitle">Новая категория</h3>
+            <input type="hidden" id="editCategoryId" />
+            <div class="form-group">
+                <label>Наименование категории</label>
+                <input type="text" id="categoryNameInput" class="form-control" placeholder="Например: Выпечка" />
+            </div>
+            <div class="modal-actions">
+                <button class="btn btn-outline" onclick="closeModal('categoryModal')">Отмена</button>
+                <button class="btn btn-primary" onclick="saveCategory()">Сохранить</button>
+            </div>
+        </div>
+    </div>
+
+    <div class="modal-overlay" id="productModal">
+        <div class="modal">
+            <h3 id="productModalTitleText">Новый товар</h3>
+            <input type="hidden" id="editProductId" />
+            <div class="form-group">
+                <label>Наименование товара</label>
+                <input type="text" id="productNameInput" class="form-control" placeholder="Пирожок с мясом" />
+            </div>
+            <div class="form-group">
+                <label>Цена за единицу (₸)</label>
+                <input type="number" id="productPriceInput" class="form-control" placeholder="450" />
+            </div>
+            <div class="modal-actions">
+                <button class="btn btn-outline" onclick="closeModal('productModal')">Отмена</button>
+                <button class="btn btn-primary" onclick="saveProduct()">Сохранить</button>
+            </div>
+        </div>
+    </div>
+
+    <div class="modal-overlay" id="shiftDetailModal">
+        <div class="modal">
+            <div class="print-header">
+                <h2>ОТЧЕТ КАССОВОЙ СМЕНЫ</h2>
+            </div>
+            <h3 id="shiftDetailTitle" style="margin-bottom: 12px">Итоговый отчет смены</h3>
+            <div id="shiftDetailContent" style="font-size: 0.85rem; line-height: 1.4; margin-bottom: 12px"></div>
+            <div class="modal-actions no-print" style="flex-direction: column; gap: 8px;">
+                <button class="btn btn-primary" onclick="printReportWithCustomName()">Печать / Сохранить PDF</button>
+                <button class="btn btn-outline" onclick="closeModal('shiftDetailModal')">Закрыть</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let state = {
+            isShiftOpen: true,
+            activeCategory: null,
+            categories: [{
+                    id: "1",
+                    name: "Выпечка"
+                },
+                {
+                    id: "2",
+                    name: "Напитки"
+                },
+            ],
+            products: [{
+                    id: "p1",
+                    categoryId: "1",
+                    name: "Самса с мясом",
+                    price: 450,
+                    kaspiSales: 0,
+                    cashSales: 0
+                },
+                {
+                    id: "p2",
+                    categoryId: "2",
+                    name: "Coca-Cola 0.5 л",
+                    price: 350,
+                    kaspiSales: 0,
+                    cashSales: 0
+                },
+            ],
+            shiftHistory: [],
+        };
+
+        function updateDateTime() {
+            const now = new Date();
+            const dateStr = now.toLocaleDateString("ru-RU", {
+                day: "2-digit",
+                month: "2-digit",
+                year: "numeric"
+            });
+            const timeStr = now.toLocaleTimeString("ru-RU", {
+                hour: "2-digit",
+                minute: "2-digit",
+                second: "2-digit",
+            });
+
+            let weekday = now.toLocaleDateString("ru-RU", {
+                weekday: "long"
+            });
+            weekday = weekday.charAt(0).toUpperCase() + weekday.slice(1);
+
+            document.getElementById("headerDateTime").innerText = `${weekday}, ${dateStr}, ${timeStr}`;
+        }
+        setInterval(updateDateTime, 1000);
+
+        function loadState() {
+            const saved = localStorage.getItem("buffet_state_prod_v12");
+            if (saved) {
+                try {
+                    state = JSON.parse(saved);
+                } catch (e) {}
+            }
+            updateDateTime();
+        }
+
+        function saveState() {
+            localStorage.setItem("buffet_state_prod_v12", JSON.stringify(state));
+            render();
+        }
+
+        function navigate(screenId) {
+            document.querySelectorAll(".screen").forEach((s) => s.classList.remove("active"));
+            document.querySelectorAll(".nav-item").forEach((n) => n.classList.remove("active"));
+            if (screenId === "dashboard") {
+                document.getElementById("screen-dashboard").classList.add("active");
+                document.getElementById("nav-dashboard").classList.add("active");
+                state.activeCategory = null;
+            } else if (screenId === "category") {
+                document.getElementById("screen-category").classList.add("active");
+            } else if (screenId === "analytics") {
+                document.getElementById("screen-analytics").classList.add("active");
+                document.getElementById("nav-analytics").classList.add("active");
+            }
+            render();
+        }
+
+        function showSplash(text) {
+            const splash = document.getElementById("saleSplash");
+            document.getElementById("splashText").innerText = text;
+            splash.classList.add("show");
+            setTimeout(() => {
+                splash.classList.remove("show");
+            }, 600);
+        }
+
+        function toggleShift() {
+            if (state.isShiftOpen) {
+                if (confirm("Закрыть текущую кассовую смену и сформировать итоговый отчет?")) {
+                    let totalKaspi = 0,
+                        totalCash = 0,
+                        totalQty = 0;
+                    state.products.forEach((p) => {
+                        totalKaspi += p.kaspiSales * p.price;
+                        totalCash += p.cashSales * p.price;
+                        totalQty += p.kaspiSales + p.cashSales;
+                    });
+
+                    const now = new Date();
+                    const shiftRecord = {
+                        id: Date.now(),
+                        date: now.toLocaleDateString("ru-RU", {
+                            day: "2-digit",
+                            month: "2-digit",
+                            year: "numeric",
+                        }),
+                        time: now.toLocaleTimeString("ru-RU", {
+                            hour: "2-digit",
+                            minute: "2-digit"
+                        }),
+                        kaspi: totalKaspi,
+                        cash: totalCash,
+                        total: totalKaspi + totalCash,
+                        qty: totalQty,
+                        productsSnapshot: JSON.parse(JSON.stringify(state.products)),
+                    };
+
+                    state.shiftHistory.unshift(shiftRecord);
+                    state.isShiftOpen = false;
+                    state.products.forEach((p) => {
+                        p.kaspiSales = 0;
+                        p.cashSales = 0;
+                    });
+                    saveState();
+                    viewShiftDetail(0);
+                }
+            } else {
+                if (confirm("Открыть новую рабочую смену?")) {
+                    state.isShiftOpen = true;
+                    saveState();
+                }
+            }
+        }
+
+        let holdTimer = null;
+        let isHolding = false;
+
+        function startHoldSale(productId, type, btnEl, event) {
+            event.stopPropagation();
+            if (!state.isShiftOpen) {
+                alert("Кассовая смена закрыта!");
+                return;
+            }
+            isHolding = true;
+            const bar = btnEl.querySelector(".progress-bar");
+            bar.style.transition = "width 0.4s linear";
+            bar.style.width = "100%";
+
+            holdTimer = setTimeout(() => {
+                if (isHolding) {
+                    registerSale(productId, type);
+                    resetHold(bar);
+                }
+            }, 400);
+        }
+
+        function cancelHold(btnEl) {
+            isHolding = false;
+            if (holdTimer) clearTimeout(holdTimer);
+            const bar = btnEl.querySelector(".progress-bar");
+            resetHold(bar);
+        }
+
+        function resetHold(bar) {
+            if (!bar) return;
+            bar.style.transition = "none";
+            bar.style.width = "0%";
+        }
+
+        function registerSale(productId, type) {
+            const product = state.products.find((p) => p.id === productId);
+            if (!product) return;
+
+            if (type === "kaspi") product.kaspiSales++;
+            if (type === "cash") product.cashSales++;
+
+            if (navigator.vibrate) navigator.vibrate(40);
+            showSplash(`${product.name} (${product.price.toLocaleString()} ₸)`);
+            saveState();
+        }
+
+        function undoSale(productId, type, event) {
+            event.stopPropagation();
+            if (!state.isShiftOpen) return;
+            const product = state.products.find((p) => p.id === productId);
+            if (!product) return;
+
+            const typeName = type === "kaspi" ? "Kaspi QR" : "Наличные";
+            const currentCount = type === "kaspi" ? product.kaspiSales : product.cashSales;
+
+            if (currentCount <= 0) {
+                alert(`Количество продаж (${typeName}) уже равно нулю.`);
+                return;
+            }
+
+            if (confirm(`Отменить продажу 1 ед. товара "${product.name}" (${typeName})?`)) {
+                if (type === "kaspi") product.kaspiSales--;
+                if (type === "cash") product.cashSales--;
+                if (navigator.vibrate) navigator.vibrate(20);
+                saveState();
+            }
+        }
+
+        function openCategoryModal() {
+            document.getElementById("editCategoryId").value = "";
+            document.getElementById("categoryNameInput").value = "";
+            document.getElementById("categoryModalTitle").innerText = "Новая категория";
+            document.getElementById("categoryModal").classList.add("active");
+        }
+
+        function openEditCategory(catId, event) {
+            event.stopPropagation();
+            const cat = state.categories.find((c) => c.id === catId);
+            if (!cat) return;
+            document.getElementById("editCategoryId").value = cat.id;
+            document.getElementById("categoryNameInput").value = cat.name;
+            document.getElementById("categoryModalTitle").innerText = "Редактировать категорию";
+            document.getElementById("categoryModal").classList.add("active");
+        }
+
+        function openProductModal() {
+            document.getElementById("editProductId").value = "";
+            document.getElementById("productNameInput").value = "";
+            document.getElementById("productPriceInput").value = "";
+            document.getElementById("productModalTitleText").innerText = "Новый товар";
+            document.getElementById("productModal").classList.add("active");
+        }
+
+        function openEditProduct(productId, event) {
+            event.stopPropagation();
+            const product = state.products.find((p) => p.id === productId);
+            if (!product) return;
+            document.getElementById("editProductId").value = product.id;
+            document.getElementById("productNameInput").value = product.name;
+            document.getElementById("productPriceInput").value = product.price;
+            document.getElementById("productModalTitleText").innerText = "Редактировать товар";
+            document.getElementById("productModal").classList.add("active");
+        }
+
+        function closeModal(id) {
+            document.getElementById(id).classList.remove("active");
+        }
+
+        function saveCategory() {
+            const id = document.getElementById("editCategoryId").value;
+            const input = document.getElementById("categoryNameInput");
+            const name = input.value.trim();
+            if (!name) return;
+
+            if (id) {
+                const cat = state.categories.find((c) => c.id === id);
+                if (cat) cat.name = name;
+            } else {
+                state.categories.push({
+                    id: Date.now().toString(),
+                    name
+                });
+            }
+            input.value = "";
+            document.getElementById("editCategoryId").value = "";
+            closeModal("categoryModal");
+            saveState();
+        }
+
+        function saveProduct() {
+            const id = document.getElementById("editProductId").value;
+            const nameInput = document.getElementById("productNameInput");
+            const priceInput = document.getElementById("productPriceInput");
+            const name = nameInput.value.trim();
+            const price = parseFloat(priceInput.value);
+
+            if (!name || isNaN(price) || price <= 0) {
+                alert("Пожалуйста, укажите корректное наименование и цену товара.");
+                return;
+            }
+
+            if (id) {
+                const prod = state.products.find((p) => p.id === id);
+                if (prod) {
+                    prod.name = name;
+                    prod.price = price;
+                }
+            } else {
+                if (!state.activeCategory) return;
+                state.products.push({
+                    id: "p_" + Date.now(),
+                    categoryId: state.activeCategory,
+                    name,
+                    price,
+                    kaspiSales: 0,
+                    cashSales: 0,
+                });
+            }
+
+            nameInput.value = "";
+            priceInput.value = "";
+            document.getElementById("editProductId").value = "";
+            closeModal("productModal");
+            saveState();
+        }
+
+        function deleteCategory(catId, event) {
+            event.stopPropagation();
+            if (confirm("Удалить выбранную категорию и все привязанные к ней позиции?")) {
+                state.categories = state.categories.filter((c) => c.id !== catId);
+                state.products = state.products.filter((p) => p.categoryId !== catId);
+                saveState();
+            }
+        }
+
+        function deleteProduct(productId, event) {
+            event.stopPropagation();
+            if (confirm("Удалить данную товарную позицию?")) {
+                state.products = state.products.filter((p) => p.id !== productId);
+                saveState();
+            }
+        }
+
+        function render() {
+            const badge = document.getElementById("shiftStatusBadge");
+            const toggleBtn = document.getElementById("btnToggleShift");
+
+            if (state.isShiftOpen) {
+                badge.className = "shift-badge open";
+                badge.innerText = "Смена открыта";
+                toggleBtn.innerHTML = `<svg viewBox="0 0 24 24" style="width:16px;height:16px;fill:currentColor;"><path d="M19 6.41L17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/></svg> Закрыть смену`;
+                toggleBtn.className = "btn btn-danger";
+            } else {
+                badge.className = "shift-badge closed";
+                badge.innerText = "Смена закрыта";
+                toggleBtn.innerHTML = `<svg viewBox="0 0 24 24" style="width:16px;height:16px;fill:currentColor;"><path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z"/></svg> Открыть смену`;
+                toggleBtn.className = "btn btn-primary";
+            }
+
+            let totalRev = 0,
+                totalQty = 0,
+                totalKaspi = 0,
+                totalCash = 0;
+            state.products.forEach((p) => {
+                const kRev = p.kaspiSales * p.price;
+                const cRev = p.cashSales * p.price;
+                totalKaspi += kRev;
+                totalCash += cRev;
+                totalRev += kRev + cRev;
+                totalQty += p.kaspiSales + p.cashSales;
+            });
+
+            document.getElementById("statRevenue").innerText = totalRev.toLocaleString() + " ₸";
+            document.getElementById("statItemsCount").innerText = totalQty + " шт.";
+            document.getElementById("statKaspi").innerText = totalKaspi.toLocaleString() + " ₸";
+            document.getElementById("statCash").innerText = totalCash.toLocaleString() + " ₸";
+
+            const catGrid = document.getElementById("categoriesGrid");
+            catGrid.innerHTML = "";
+            state.categories.forEach((cat) => {
+                const count = state.products.filter((p) => p.categoryId === cat.id).length;
+                const tile = document.createElement("div");
+                tile.className = "category-tile";
+                tile.onclick = () => {
+                    state.activeCategory = cat.id;
+                    document.getElementById("currentCategoryTitle").innerText = cat.name;
+                    document.getElementById("productSearch").value = "";
+                    navigate("category");
+                };
+                tile.innerHTML = `
+                    <div class="category-actions">
+                        <button class="icon-btn" onclick="openEditCategory('${cat.id}', event)" title="Редактировать"><svg viewBox="0 0 24 24"><path d="M3 17.25V21h3.75L17.81 9.94l-3.75-3.75L3 17.25zM20.71 7.04c.39-.39.39-1.02 0-1.41l-2.34-2.34c-.39-.39-1.02-.39-1.41 0l-1.83 1.83 3.75 3.75 1.83-1.83z"/></svg></button>
+                        <button class="icon-btn danger" onclick="deleteCategory('${cat.id}', event)" title="Удалить"><svg viewBox="0 0 24 24"><path d="M19 6.41L17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/></svg></button>
+                    </div>
+                    <h3>${cat.name}</h3>
+                    <span>${count} поз.</span>
+                `;
+                catGrid.appendChild(tile);
+            });
+
+            if (state.activeCategory) renderProductsList();
+
+            document.getElementById("analyticsSummary").innerHTML = `
+                Итоговая выручка: <b>${totalRev.toLocaleString()} ₸</b><br>
+                Продано товаров: <b>${totalQty} шт.</b><br>
+                Оплата Kaspi QR: <b>${totalKaspi.toLocaleString()} ₸</b> | Наличные: <b>${totalCash.toLocaleString()} ₸</b>
+            `;
+
+            const historyBody = document.getElementById("historyTableBody");
+            historyBody.innerHTML = "";
+            if (state.shiftHistory.length === 0) {
+                historyBody.innerHTML =
+                    '<tr><td colspan="5" style="text-align: center; color: var(--text-muted);">Архив смен пуст</td></tr>';
+            } else {
+                state.shiftHistory.forEach((shift, index) => {
+                    const tr = document.createElement("tr");
+                    tr.innerHTML = `
+                        <td>${shift.date} <br><small style="color:var(--text-muted);">${shift.time}</small></td>
+                        <td>${shift.kaspi > 0 ? shift.kaspi.toLocaleString() + " ₸" : "—"}</td>
+                        <td>${shift.cash > 0 ? shift.cash.toLocaleString() + " ₸" : "—"}</td>
+                        <td><b>${shift.total > 0 ? shift.total.toLocaleString() + " ₸" : "—"}</b></td>
+                        <td><button class="btn btn-outline" style="padding:4px 8px; font-size:0.7rem; width:auto;" onclick="viewShiftDetail(${index})">Просмотр</button></td>
+                    `;
+                    historyBody.appendChild(tr);
+                });
+            }
+        }
+
+        function renderProductsList() {
+            const prodList = document.getElementById("productList");
+            prodList.innerHTML = "";
+            const searchVal = document.getElementById("productSearch").value.toLowerCase();
+            let items = state.products.filter((p) => p.categoryId === state.activeCategory);
+            if (searchVal) items = items.filter((p) => p.name.toLowerCase().includes(searchVal));
+
+            if (items.length === 0) {
+                prodList.innerHTML =
+                    '<div style="text-align:center; padding: 20px; color:var(--text-muted);">Товары не найдены</div>';
+                return;
+            }
+
+            items.forEach((p) => {
+                const totalSold = p.kaspiSales + p.cashSales;
+                const totalSum = totalSold * p.price;
+                const card = document.createElement("div");
+                card.className = "product-card";
+                card.innerHTML = `
+                    <div class="product-info">
+                        <div style="flex:1;">
+                            <div class="product-name">${p.name}</div>
+                            <div class="product-price">${p.price.toLocaleString()} ₸</div>
+                            <div class="product-total-sold">Продано: <b>${totalSold} шт.</b> • <b>${totalSum.toLocaleString()} ₸</b></div>
+                        </div>
+                        <div style="display:flex; gap:4px;">
+                            <button class="icon-btn" onclick="openEditProduct('${p.id}', event)" title="Редактировать"><svg viewBox="0 0 24 24"><path d="M3 17.25V21h3.75L17.81 9.94l-3.75-3.75L3 17.25zM20.71 7.04c.39-.39.39-1.02 0-1.41l-2.34-2.34c-.39-.39-1.02-.39-1.41 0l-1.83 1.83 3.75 3.75 1.83-1.83z"/></svg></button>
+                            <button class="icon-btn danger" onclick="deleteProduct('${p.id}', event)" title="Удалить"><svg viewBox="0 0 24 24"><path d="M19 6.41L17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/></svg></button>
+                        </div>
+                    </div>
+                    
+                    <div class="payment-grid">
+                        <div class="payment-column">
+                            <button class="pay-btn kaspi" 
+                                onmousedown="startHoldSale('${p.id}', 'kaspi', this, event)" onmouseup="cancelHold(this)" onmouseleave="cancelHold(this)"
+                                ontouchstart="startHoldSale('${p.id}', 'kaspi', this, event)" ontouchend="cancelHold(this)">
+                                <svg viewBox="0 0 24 24"><path d="M2 2h8v8H2V2m2 2v4h4V4H4m8-2h8v8h-8V2m2 2v4h4V4h-4M2 12h8v8H2v-8m2 2v4h4v-4H4m10 2h2v2h-2v-2m4 0h2v2h-2v-2m-4 4h2v2h-2v-2m4 0h2v2h-2v-2m-2-6h2v2h-2v-2z"/></svg>
+                                Kaspi QR
+                                <span class="sub-stat">${p.kaspiSales > 0 ? p.kaspiSales + " шт. • " + (p.kaspiSales * p.price).toLocaleString() + " ₸" : "—"}</span>
+                                <div class="progress-bar"></div>
+                            </button>
+                            <button class="btn-cancel-col" onclick="undoSale('${p.id}', 'kaspi', event)">Отмена (-1)</button>
+                        </div>
+
+                        <div class="payment-column">
+                            <button class="pay-btn cash" 
+                                onmousedown="startHoldSale('${p.id}', 'cash', this, event)" onmouseup="cancelHold(this)" onmouseleave="cancelHold(this)"
+                                ontouchstart="startHoldSale('${p.id}', 'cash', this, event)" ontouchend="cancelHold(this)">
+                                <svg viewBox="0 0 24 24"><path d="M21 18v1c0 1.1-.9 2-2 2H5c-1.1 0-2-.9-2-2V5c0-1.1.9-2 2-2h14c1.1 0 2 .9 2 2v1h-9c-1.1 0-2 .9-2 2v8c0 1.1.9 2 2 2h9m-9-2h10V8H12v8m4-2.5c-.83 0-1.5-.67-1.5-1.5s.67-1.5 1.5-1.5 1.5.67 1.5 1.5-.67 1.5-1.5 1.5Z"/></svg>
+                                Наличные
+                                <span class="sub-stat">${p.cashSales > 0 ? p.cashSales + " шт. • " + (p.cashSales * p.price).toLocaleString() + " ₸" : "—"}</span>
+                                <div class="progress-bar"></div>
+                            </button>
+                            <button class="btn-cancel-col" onclick="undoSale('${p.id}', 'cash', event)">Отмена (-1)</button>
+                        </div>
+                    </div>
+                    <div class="hold-hint">Удерживайте кнопку 0.4 сек для регистрации продажи</div>
+                `;
+                prodList.appendChild(card);
+            });
+        }
+
+        let currentActiveShift = null;
+
+        function viewShiftDetail(index) {
+            const shift = state.shiftHistory[index];
+            currentActiveShift = shift;
+
+            let details = `<div style="border-bottom: 1px solid var(--border-color); padding-bottom: 8px; margin-bottom: 8px;">`;
+            details += `<b>Дата и время закрытия:</b> ${shift.date}, ${shift.time}<br>`;
+            details += `<b>Общая выручка:</b> ${shift.total > 0 ? shift.total.toLocaleString() + " ₸" : "—"}<br>`;
+            details += `• Kaspi QR: <b>${shift.kaspi > 0 ? shift.kaspi.toLocaleString() + " ₸" : "—"}</b><br>`;
+            details += `• Наличные: <b>${shift.cash > 0 ? shift.cash.toLocaleString() + " ₸" : "—"}</b><br>`;
+            details += `</div><b>Товарная ведомость:</b><br><table class="history-table" style="margin-top:6px;">`;
+            details += `<thead><tr><th>Товар</th><th>Kaspi QR</th><th>Наличные</th><th>Итого</th></tr></thead><tbody>`;
+
+            let hasSales = false;
+            shift.productsSnapshot.forEach((p) => {
+                const kCount = p.kaspiSales || 0;
+                const cCount = p.cashSales || 0;
+                const sumCount = kCount + cCount;
+                if (sumCount > 0) {
+                    hasSales = true;
+                    details += `<tr>`;
+                    details += `<td><b>${p.name}</b><br><small style="color:var(--text-muted);">${p.price} ₸</small></td>`;
+                    details += `<td>${kCount > 0 ? kCount + " шт.<br>" + (kCount * p.price).toLocaleString() + " ₸" : "—"}</td>`;
+                    details += `<td>${cCount > 0 ? cCount + " шт.<br>" + (cCount * p.price).toLocaleString() + " ₸" : "—"}</td>`;
+                    details += `<td><b>${sumCount} шт.</b><br><b>${(sumCount * p.price).toLocaleString()} ₸</b></td>`;
+                    details += `</tr>`;
+                }
+            });
+
+            if (!hasSales)
+                details += `<tr><td colspan="4" style="text-align:center;">В данной смене продаж не зафиксировано</td></tr>`;
+            details += `</tbody></table>`;
+
+            document.getElementById("shiftDetailTitle").innerText = `Отчет смены за ${shift.date}`;
+            document.getElementById("shiftDetailContent").innerHTML = details;
+            document.getElementById("shiftDetailModal").classList.add("active");
+        }
+
+        function printReportWithCustomName() {
+            if (!currentActiveShift) return;
+
+            const safeDate = currentActiveShift.date.replace(/\./g, '-');
+            const originalTitle = document.title;
+
+            document.title = `Буфет_${safeDate}`;
+
+            window.print();
+
+            setTimeout(() => {
+                document.title = originalTitle;
+            }, 1000);
+        }
+
+        window.addEventListener("DOMContentLoaded", () => {
+            loadState();
+            render();
+        });
+    </script>
+</body>
+
+</html>
